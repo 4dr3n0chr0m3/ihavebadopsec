@@ -1,12 +1,13 @@
 {
-  "name": "ihavebadopsec-proxy",
-  "version": "1.0.0",
+  "name": "ylians-math-tutoring",
+  "version": "2.0.0",
+  "description": "Educational Math Tutoring Workspace Platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "unblocker": "^2.0.0"
+    "@titaniumnetwork-dev/ultraviolet": "^3.2.3",
+    "express": "^4.19.2"
   }
 }
