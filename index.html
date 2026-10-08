@@ -5,167 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculus Module 4.2 - Advanced Trigonometric Identities</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a;
-            color: #dcdcdc;
-            margin: 0;
-            padding: 40px 20px;
-        }
-        .workspace {
-            max-width: 750px;
-            margin: 0 auto;
-            background: #242424;
-            padding: 35px;
-            border-radius: 6px;
-            border: 1px solid #333;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        h1 {
-            font-size: 1.6rem;
-            color: #ffffff;
-            margin-top: 0;
-            border-bottom: 2px solid #0070f3;
-            padding-bottom: 10px;
-        }
-        .math-box {
-            background: #1e1e1e;
-            padding: 15px;
-            border-left: 4px solid #0070f3;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 20px 0;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-        .controls {
-            margin-top: 25px;
-            display: flex;
-            gap: 10px;
-        }
-        input[type="text"] {
-            flex: 1;
-            padding: 12px;
-            border-radius: 4px;
-            border: 1px solid #444;
-            background-color: #2e2e2e;
-            color: #fff;
-            font-size: 15px;
-        }
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .btn-launch {
-            background-color: #0070f3;
-            color: white;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: #dcdcdc; margin: 0; padding: 40px 20px; }
+        .workspace { max-width: 750px; margin: 0 auto; background: #242424; padding: 35px; border-radius: 6px; border: 1px solid #333; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        h1 { font-size: 1.6rem; color: #ffffff; margin-top: 0; border-bottom: 2px solid #0070f3; padding-bottom: 10px; }
+        .math-box { background: #1e1e1e; padding: 15px; border-left: 4px solid #0070f3; font-family: 'Courier New', Courier, monospace; margin: 20px 0; font-size: 0.95rem; line-height: 1.6; }
+        .controls { margin-top: 25px; display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 12px; border-radius: 4px; border: 1px solid #444; background-color: #2e2e2e; color: #fff; font-size: 15px; }
+        button { padding: 12px 24px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .btn-launch { background-color: #0070f3; color: white; }
         .btn-launch:hover { background-color: #0056b3; }
-        .btn-panic {
-            background-color: #d9383a;
-            color: white;
-        }
+        .btn-panic { background-color: #d9383a; color: white; }
         .btn-panic:hover { background-color: #b32d2f; }
-        .footer-text {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 30px;
-            text-align: center;
-        }
-        /* No-JS Fallback Overlay */
-        #noscript-warning {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #2b2b2b; color: #aaa;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.2rem; font-family: sans-serif;
-            z-index: 9999; text-align: center; padding: 20px;
-        }
+        .footer-text { font-size: 0.8rem; color: #666; margin-top: 30px; text-align: center; }
+        #noscript-warning { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2b2b2b; color: #aaa; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; z-index: 9999; text-align: center; padding: 20px; }
     </style>
-    <!-- Automatic history camouflage script -->
-    <script>
-        // Prevents the actual URL from showing clearly in standard back/forward browser caching
-        if (window.location.search) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-    </script>
 </head>
 <body>
-
-<!-- This container automatically displays if the browser blocks script execution -->
-<noscript>
-    <div idnoscript-warning>
-        <div>
-            <p><strong>Error 403: Workspace Verification Pending</strong></p>
-            <p style="font-size: 0.9rem;">JavaScript must be enabled to synchronize with regional educational tracking standards.</p>
-        </div>
-    </div>
-</noscript>
-
-<div class="workspace" id="mainWorkspace">
+<noscript><div id="noscript-warning"><div><p><strong>Error 403: Workspace Verification Pending</strong></p></div></div></noscript>
+<div class="workspace">
     <h1>📐 Ylian's Math Tutoring Platform</h1>
     <p>Enter your designated module resource URL below to synchronize your active educational workspace environment.</p>
-    
-    <div class="math-box">
-        <strong>Current Unit:</strong> Calculus Module 4.2 Practice Assignment<br>
-        <code>f'(x) = lim┬(h→0)〖(f(x+h) - f(x)) / h〗</code><br>
-        <code>∫ x^n dx = (x^(n+1)) / (n+1) + C , (n ≠ -1)</code>
-    </div>
-
+    <div class="math-box"><strong>Current Unit:</strong> Calculus Module 4.2 Practice Assignment</div>
     <div class="controls">
-        <input type="text" id="urlInput" placeholder="https://educational-resource-portal.org" value="https://example.com">
+        <input type="text" id="urlInput" placeholder="https://example.com" value="https://example.com">
         <button class="btn-launch" onclick="launchWorkspace()">Launch Lesson</button>
-        <button class="btn-panic" onclick="triggerPanic()">Panic [Esc]</button>
-    </div>
-
-    <div class="footer-text">
-        &copy; 2026 K-12 Math Learning Systems International. Fully compliant with regional tracking protocols.
+        <button class="btn-panic" onclick="triggerPanic()">Panic Close</button>
     </div>
 </div>
-
+<script src="/uv/uv.bundle.js" defer></script>
+<script src="/uv/uv.config.js" defer></script>
 <script>
 function launchWorkspace() {
     let targetUrl = document.getElementById('urlInput').value.trim();
-    
-    if (targetUrl) {
-        if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
-            targetUrl = 'https://' + targetUrl;
-        }
-        
-        // Dynamically disguise the tab title right before moving to mask user intent
-        try {
-            const domain = new URL(targetUrl).hostname;
-            document.title = "Loading Module: " + domain;
-        } catch(e) {
-            document.title = "Synchronizing Workspace...";
-        }
-        
-        window.location.href = '/proxy/' + targetUrl;
-    }
+    if (!targetUrl) return;
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) targetUrl = 'https://' + targetUrl;
+    const proxyPath = window.location.origin + '/uv/service/' + btoa(targetUrl).replace(/=/g, '');
+    const win = window.open('about:blank', '_blank');
+    if (win) {
+        const iframe = win.document.createElement('iframe');
+        iframe.src = proxyPath;
+        iframe.style.width = '100%'; iframe.style.height = '100%'; iframe.style.border = 'none';
+        win.document.body.appendChild(iframe);
+    } else { window.location.href = proxyPath; }
 }
-
-// Panic Function: Instantly switches the screen to a convincing educational site (Google Classroom)
-function triggerPanic() {
-    window.location.href = "https://google.com";
-}
-
-// Global Event Listeners
-document.getElementById('urlInput').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        launchWorkspace();
-    }
-});
-
-// Pressing the 'Escape' key anywhere on the page triggers the panic redirect instantly
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        triggerPanic();
-    }
-});
+function triggerPanic() { window.location.replace("https://google.com"); }
 </script>
-
 </body>
 </html>
