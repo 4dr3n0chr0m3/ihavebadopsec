@@ -1,46 +1,53 @@
+const express = require('express');
 const http = require('http');
-const fs = require('fs');
+const https = require('https');
 const path = require('path');
-const { RammerheadResponders, RammerheadSessionFileCache } = require('@rubynetwork/rammerhead');
+const app = express();
 
-// Establish a clean standalone directory storage engine for dynamic cookie parsing
-const sessionCache = new RammerheadSessionFileCache();
+// Serve the static frontend student workspace assets from root
+app.use(express.static(__dirname));
 
-const server = http.createServer((req, res) => {
-    // 1. Manually check and route Rammerhead network session events
-    if (req.url.startsWith('/rammer/')) {
-        const result = RammerheadResponders.handle(req, res, sessionCache, '/rammer/');
-        if (result) return;
-    }
-
-    // 2. Route default root traffic directly to your frontend index.html layer
-    if (req.url === '/' || req.url === '/index.html') {
-        fs.readFile(path.join(__dirname, 'index.html'), (err, data) => {
-            if (err) {
-                res.writeHead(500);
-                return res.end('Error loading dashboard files.');
-            }
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(data);
-        });
-        return;
-    }
-
-    // 3. Throw a plain placeholder catch if an unknown route is triggered
-    res.writeHead(404);
-    res.end('Not Found');
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Bind active pipeline upgrades directly into the sessionCache (Crucial for Roblox assets)
-server.on('upgrade', (req, socket, head) => {
-    if (req.url.startsWith('/rammer/')) {
-        RammerheadResponders.upgrade(req, socket, head, sessionCache, '/rammer/');
-    } else {
-        socket.end();
+// The core routing proxy engine mechanism
+app.get('/proxy', (req, res) => {
+    const targetUrl = req.query.url;
+    if (!targetUrl) {
+        return res.status(400).send('Target resource URL parameter missing.');
+    }
+
+    try {
+        const parsedUrl = new URL(targetUrl);
+        const clientModule = parsedUrl.protocol === 'https:' ? https : http;
+
+        // Clone tracking context options to bypass server orientation headers
+        const options = {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+            }
+        };
+
+        const proxyReq = clientModule.request(targetUrl, options, (proxyRes) => {
+            // Forward headers and status code cleanly to the client container
+            res.writeHead(proxyRes.statusCode, proxyRes.headers);
+            proxyRes.pipe(res, { end: true });
+        });
+
+        proxyReq.on('error', (err) => {
+            res.status(500).send(`Routing stream interception bottleneck: ${err.message}`);
+        });
+
+        proxyReq.end();
+    } catch (e) {
+        res.status(400).send('Invalid target URL string format requested.');
     }
 });
 
 const port = process.env.PORT || 8080;
-server.listen(port, () => {
+app.listen(port, () => {
     console.log(`Educational workspace active on port ${port}`);
 });
