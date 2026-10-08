@@ -31,6 +31,15 @@
 </div>
 
 <script>
+// Forcefully clear out any broken historical Ultraviolet service workers on load
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+            registration.unregister();
+        }
+    });
+}
+
 function launchWorkspace() {
     let targetUrl = document.getElementById('urlInput').value.trim();
     if (!targetUrl) return;
@@ -38,22 +47,15 @@ function launchWorkspace() {
         targetUrl = 'https://' + targetUrl;
     }
     
-    // Construct the direct Rammerhead proxy session path
-    const proxyPath = window.location.origin + '/rammer/session/new/' + encodeURIComponent(targetUrl);
-    const win = window.open('about:blank', '_blank');
-    
-    if (win) {
-        win.document.body.style.margin = '0';
-        win.document.body.style.height = '100vh';
-        const iframe = win.document.createElement('iframe');
-        iframe.src = proxyPath;
-        iframe.style.width = '100%'; iframe.style.height = '100%'; iframe.style.border = 'none';
-        win.document.body.appendChild(iframe);
-    } else { 
-        window.location.href = proxyPath; 
-    }
+    // Direct same-tab navigation to bypass cached routing loops
+    window.location.href = window.location.origin + '/rammer/session/new/' + encodeURIComponent(targetUrl);
 }
-function triggerPanic() { window.location.replace("https://google.com"); }
+
+function triggerPanic() { window.location.replace("https://classroom.google.com"); }
+
+document.getElementById('urlInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') { launchWorkspace(); }
+});
 </script>
 </body>
 </html>
