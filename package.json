@@ -7,7 +7,6 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@rubynetwork/rammerhead": "^1.0.3",
-    "express": "^4.19.2"
+    "@rubynetwork/rammerhead": "^1.0.3"
   }
 }
