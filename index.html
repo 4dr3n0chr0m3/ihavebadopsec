@@ -57,5 +57,23 @@ document.getElementById('urlInput').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') { launchWorkspace(); }
 });
 </script>
+    <script>
+function launchWorkspace() {
+    let targetUrl = document.getElementById('urlInput').value.trim();
+    if (!targetUrl) return;
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+        targetUrl = 'https://' + targetUrl;
+    }
+    
+    // Direct same-tab navigation to the session handler
+    window.location.href = window.location.origin + '/rammer/session/new/' + encodeURIComponent(targetUrl);
+}
+
+function triggerPanic() { window.location.replace("https://google.com"); }
+
+document.getElementById('urlInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') { launchWorkspace(); }
+});
+</script>
 </body>
 </html>
