@@ -3,74 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Portal</title>
+    <!-- This keeps the browser tab showing a safe name -->
+    <title>K-12 Math Tutoring - Home</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+        :root {
+            --primary: #1a5f7a;
+            --secondary: #57c5b6;
+            --dark: #2c3e50;
+            --light: #f8f9fa;
         }
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            font-weight: 400;
-        }
-        .search-container {
-            width: 100%;
-            max-width: 600px;
-            padding: 0 20px;
-            box-sizing: border-box;
-        }
-        input {
-            width: 100%;
-            padding: 15px 20px;
-            font-size: 1rem;
-            background-color: #1e1e1e;
-            border: 1px solid #333333;
-            border-radius: 30px;
-            color: #ffffff;
-            outline: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: border 0.3s ease;
-        }
-        input:focus {
-            border: 1px solid #555555;
-        }
+        body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; height: 100%; background: var(--light); color: var(--dark); overflow-x: hidden; }
+        
+        /* Educational Theme Styles */
+        header { background: white; padding: 15px 10%; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .logo { font-size: 24px; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        nav a { margin-left: 20px; text-decoration: none; color: var(--dark); font-weight: 500; }
+        nav a:hover { color: var(--primary); }
+        
+        .hero { text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #e8f1f5 0%, #ffffff 100%); }
+        .hero h1 { font-size: 42px; margin-bottom: 10px; color: var(--dark); }
+        .hero p { font-size: 18px; color: #666; margin-bottom: 30px; }
+        
+        /* The Secret Proxy Box hidden inside a "Lesson Search" look */
+        .search-box { max-width: 600px; margin: 0 auto; background: white; padding: 8px; border-radius: 50px; display: flex; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid var(--primary); }
+        .search-box input { flex: 1; border: none; padding: 15px 25px; font-size: 16px; border-radius: 50px; outline: none; }
+        .search-box button { background: var(--primary); color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 50px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        .search-box button:hover { background: #12455a; }
+
+        .features { display: flex; justify-content: center; gap: 30px; padding: 50px 10%; flex-wrap: wrap; }
+        .card { background: white; padding: 30px; border-radius: 8px; width: 250px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--secondary); text-align: center; }
+        .card h3 { margin-top: 0; color: var(--primary); }
+
+        /* PANIC OVERLAY SCREEN (Math Equations) */
+        #panicOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 99999; padding: 40px; box-sizing: border-box; overflow-y: auto; }
+        .math-header { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; font-size: 20px; font-weight: bold; color: #333; }
+        .equation-block { font-family: 'Courier New', Courier, monospace; font-size: 22px; background: #f4f4f4; padding: 20px; border-left: 5px solid #27ae60; margin: 20px 0; border-radius: 4px; color: #222; }
+        .instruction { font-size: 14px; color: #777; font-style: italic; margin-top: 40px; text-align: center; }
+
+        /* Subtle indicator label at the very bottom */
+        footer { text-align: center; padding: 20px; font-size: 12px; color: #999; margin-top: 40px; }
+        .hidden-title { cursor: default; }
     </style>
 </head>
 <body>
 
-    <h1>Web Portal</h1>
-    <div class="search-container">
-        <input type="text" id="urlInput" placeholder="Search or type a URL..." onkeydown="if(event.key === 'Enter') redirecttoProxy()">
+    <!-- Main Educational Layout -->
+    <header>
+        <div class="logo">📐 <span class="hidden-title" id="mainHeading">Ylian's Unblocker</span></div>
+        <nav>
+            <a href="#" onclick="triggerPanic()">Calculus Module</a>
+            <a href="#" onclick="triggerPanic()">Algebra I</a>
+            <a href="#" onclick="triggerPanic()">Geometry Practice</a>
+        </nav>
+    </header>
+
+    <div class="hero">
+        <h1 id="subHeading">Personalized Math Mastery</h1>
+        <p>Enter a module code or educational URL below to launch your personalized interactive workspace.</p>
+        
+        <div class="search-box">
+            <input type="text" id="urlInput" placeholder="Search curriculum topics or enter URL..." onkeydown="if(event.key === 'Enter') launchProxy()">
+            <button onclick="launchProxy()">Launch Lesson</button>
+        </div>
+    </div>
+
+    <div class="features">
+        <div class="card">
+            <h3>Interactive Assets</h3>
+            <p>Access step-by-step graphic breakdowns for advanced polynomial modules.</p>
+        </div>
+        <div class="card">
+            <h3>24/7 Portal Sync</h3>
+            <p>Your learning logs are preserved securely through local encrypted browser runtime storage.</p>
+        </div>
+        <div class="card">
+            <h3>K-12 Verification</h3>
+            <p>Fully compliant with regional remote educational tracking standards.</p>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 K-12 Math Learning Systems International. All rights reserved. 
+        <br><small style="color:#bbb;">Press the [Escape] key at any time to freeze the interactive workspace.</small>
+    </footer>
+
+    <!-- PANIC SCREEN (The Math Disguise) -->
+    <div id="panicOverlay">
+        <div class="math-header">📐 Advanced Trigonometric Identities & Calculus Module 4.2</div>
+        <p><strong>Practice Assignment:</strong> Evaluate the limits and derivatives below before proceeding to the final exam tier.</p>
+        
+        <div class="equation-block">
+            f'(x) = lim┬(h→0)⁡〖(f(x+h) - f(x)) / h〗
+        </div>
+        
+        <div class="equation-block">
+            ∫ x^n dx = (x^(n+1)) / (n+1) + C , (n ≠ -1)
+        </div>
+
+        <div class="equation-block">
+            sin²(θ) + cos²(θ) = 1 <br>
+            tan²(θ) + 1 = sec²(θ)
+        </div>
+
+        <p>Show all your processing steps clearly. Use integration by parts where mandatory to simplify structural variables.</p>
+        <div class="instruction">Workspace frozen. Press [Escape] again to resume active validation.</div>
     </div>
 
     <script>
-        // REPLACE THIS URL with your live Render backend URL
-        const BACKEND_URL = "https://onrender.com";
+        // FORWARD TRAFFIC ROUTE (Hidden Behind Cloudflare Subdomain)
+        const BACKEND_URL = "https://ihavebadopsec.org";
 
-        function redirecttoProxy() {
+        function launchProxy() {
             let input = document.getElementById('urlInput').value.trim();
             if (!input) return;
 
-            // If it's not a direct URL, turn it into a Google search query
             if (!input.includes('.') || input.includes(' ')) {
                 input = "https://google.com" + encodeURIComponent(input);
             } else if (!input.startsWith('http://') && !input.startsWith('https://')) {
                 input = 'https://' + input;
             }
 
-            // Ultraviolet encodes URLs using a specific format (framer/wisp/uv)
-            // Redirecting directly to the backend service to let it process the site safely
-            window.location.href = BACKEND_URL + "/uv/service/" + btoa(input);
+            // Redirects to your masked server routing profile
+            window.location.href = BACKEND_URL + "/?url=" + encodeURIComponent(input);
         }
+
+        // PANIC TOGGLE FUNCTION (Press Escape Key)
+        function triggerPanic() {
+            const overlay = document.getElementById('panicOverlay');
+            if (overlay.style.display === 'block') {
+                overlay.style.display = 'none';
+                document.title = "K-12 Math Tutoring - Home";
+            } else {
+                overlay.style.display = 'block';
+                document.title = "K-12 Math Tutoring - Homework Core";
+            }
+        }
+
+        // Listens for the Escape key on your physical keyboard
+        window.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                triggerPanic();
+            }
+        });
     </script>
 </body>
 </html>
