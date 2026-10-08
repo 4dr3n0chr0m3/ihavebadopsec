@@ -1,13 +1,15 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
-const rammerhead = require('@rubynetwork/rammerhead');
+
+// Extract the core setup functions directly from the wrapper package
+const { createExpressMiddleware } = require('@rubynetwork/rammerhead');
 
 const app = express();
 const server = http.createServer(app);
 
-// The module itself is the factory object containing the setup parameters
-const rammerheadMiddleware = rammerhead.createExpressMiddleware({
+// Initialize the middleware cleanly
+const rammerheadMiddleware = createExpressMiddleware({
     prefix: '/rammer/',
     reverseProxy: true
 });
