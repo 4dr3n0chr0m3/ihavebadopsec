@@ -1,12 +1,12 @@
 {
   "name": "ylians-math-tutoring",
-  "version": "3.0.0",
+  "version": "1.0.0",
   "description": "Educational Math Tutoring Workspace Platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "@rubynetwork/rammerhead": "^1.0.3"
+    "express": "^4.19.2"
   }
 }
