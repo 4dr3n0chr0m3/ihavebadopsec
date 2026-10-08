@@ -6,8 +6,10 @@ const rammerhead = require('@rubynetwork/rammerhead');
 const app = express();
 const server = http.createServer(app);
 
-// Use the correct factory initialization instead of a "new" constructor
-const rammerheadMiddleware = rammerhead.createExpressMiddleware({
+// Access the nested rammerhead object property to construct the middleware cleanly
+const rhInstance = rammerhead.rammerhead;
+
+const rammerheadMiddleware = rhInstance.createExpressMiddleware({
     prefix: '/rammer/',
     reverseProxy: true
 });
