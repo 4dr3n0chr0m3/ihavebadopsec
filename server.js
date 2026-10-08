@@ -1,23 +1,25 @@
 const express = require('express');
-const Unblocker = require('unblocker');
+const http = require('http');
+const { uvPath } = require('@titaniumnetwork-dev/ultraviolet');
 const path = require('path');
+
 const app = express();
+const server = http.createServer(app);
 
-// Instantiate the proxy engine properly using the constructor class
-const unblocker = new Unblocker({ prefix: '/proxy/' });
-
-// The proxy engine must handle requests before serving static assets
-app.use(unblocker);
-
-// Serve your frontend index.html website file 
+// Serve the frontend student dashboard files
 app.use(express.static(__dirname));
 
-const port = process.env.PORT || 8080;
+// Mount the Ultraviolet proxy engine core assets securely
+app.use('/uv/', express.static(uvPath));
 
-// Binding the server allows unblocker to securely track complex streaming sessions
-const server = app.listen(port, () => {
-  console.log(`Proxy server actively running on port ${port}`);
+// Handle the internal routing configurations
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    next();
 });
 
-// Attaches the WebSocket upgrade handler
-server.on('upgrade', unblocker.onUpgrade);
+const port = process.env.PORT || 8080;
+server.listen(port, () => {
+    console.log(`Educational platform actively running on port ${port}`);
+});
