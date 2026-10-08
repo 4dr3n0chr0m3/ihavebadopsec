@@ -7,22 +7,35 @@ const app = express();
 const server = http.createServer(app);
 const bare = createBareServer('/bare/');
 
-// Serve the frontend student dashboard files
+// 1. Serve frontend website dashboard files (index.html, sw.js, etc.)
 app.use(express.static(__dirname));
 
-// Mount the Ultraviolet proxy engine core assets securely
+// 2. Mount the Ultraviolet core asset folders securely
 app.use('/uv/', express.static(uvPath));
 
-// Route request flows through the Bare server instance or Express fallback
-app.use((req, res) => {
+// 3. Fallback catch for standard page routing requests
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
+
+// 4. Handle internal system network events through the Bare server layer
+server.on('request', (req, res) => {
     if (bare.shouldRoute(req)) {
         bare.route(req, res);
     } else {
-        res.status(404).send('Not Found');
+        app(req, res); // Passes standard site pages cleanly back to Express
+    }
+});
+
+server.on('upgrade', (req, socket, head) => {
+    if (bare.shouldRoute(req)) {
+        bare.route(req, socket, head);
+    } else {
+        socket.end();
     }
 });
 
 const port = process.env.PORT || 8080;
 server.listen(port, () => {
-    console.log(`Educational platform actively running on port ${port}`);
+    console.log(`Educational platform running on port ${port}`);
 });
