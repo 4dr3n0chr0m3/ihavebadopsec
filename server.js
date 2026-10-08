@@ -1,15 +1,23 @@
 const express = require('express');
-const unblocker = require('unblocker');
+const Unblocker = require('unblocker');
 const path = require('path');
 const app = express();
 
-// This initializes the proxy routing engine
-app.use(unblocker({ prefix: '/proxy/' }));
+// Instantiate the proxy engine properly using the constructor class
+const unblocker = new Unblocker({ prefix: '/proxy/' });
 
-// This makes your index.html and images load as the website front page
+// The proxy engine must handle requests before serving static assets
+app.use(unblocker);
+
+// Serve your frontend index.html website file 
 app.use(express.static(__dirname));
 
 const port = process.env.PORT || 8080;
-app.listen(port, () => {
-  console.log(`Server actively running on port ${port}`);
+
+// Binding the server allows unblocker to securely track complex streaming sessions
+const server = app.listen(port, () => {
+  console.log(`Proxy server actively running on port ${port}`);
 });
+
+// Attaches the WebSocket upgrade handler
+server.on('upgrade', unblocker.onUpgrade);
