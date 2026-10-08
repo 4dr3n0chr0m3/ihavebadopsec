@@ -8,26 +8,27 @@ const app = express();
 const server = http.createServer(app);
 const bare = createBareServer('/bare/');
 
-// 1. Force mount the internal Ultraviolet build files to the exact paths needed by index.html
+// 1. Mount the internal Ultraviolet folder assets
 app.use('/uv/', express.static(uvPath));
 
-// 2. Serve your personal files (index.html, sw.js, uv.config.js) from the repository root
+// 2. Serve static portal files (index.html, sw.js, uv.config.js) from your root
 app.use(express.static(__dirname));
 
-// 3. Explicitly catch any fallback attempts to the base application route
+// 3. Handle the Bare server intercept routing flow before Express endpoints
+app.use((req, res, next) => {
+    if (bare.shouldRoute(req)) {
+        bare.route(req, res);
+    } else {
+        next();
+    }
+});
+
+// 4. Default home page route configuration fallback
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 4. Handle internal network events through the Bare server layer
-server.on('request', (req, res) => {
-    if (bare.shouldRoute(req)) {
-        bare.route(req, res);
-    } else {
-        app(req, res); // Seamlessly hands control back to Express for routing
-    }
-});
-
+// 5. Connect active WebSockets cleanly (Crucial for Roblox background connections)
 server.on('upgrade', (req, socket, head) => {
     if (bare.shouldRoute(req)) {
         bare.route(req, socket, head);
@@ -38,5 +39,5 @@ server.on('upgrade', (req, socket, head) => {
 
 const port = process.env.PORT || 8080;
 server.listen(port, () => {
-    console.log(`Educational platform actively running on port ${port}`);
+    console.log(`Educational workspace operational on port ${port}`);
 });
