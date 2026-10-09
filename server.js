@@ -52,27 +52,33 @@ app.get('/proxy', (req, res) => {
         const proxyReq = clientModule.request(options, (proxyRes) => {
             let contentType = proxyRes.headers['content-type'] || '';
             let contentEncoding = proxyRes.headers['content-encoding'] || '';
+            let isHtml = contentType.includes('text/html');
 
             // Forward session headers, authentication cookies, and FIX REDIRECTS
             Object.keys(proxyRes.headers).forEach((key) => {
-                if (key.toLowerCase() === 'set-cookie') {
+                const lowerKey = key.toLowerCase();
+
+                if (lowerKey === 'set-cookie') {
                     res.append('Set-Cookie', proxyRes.headers[key]);
-                } else if (key.toLowerCase() === 'location') {
-                    // This intercepts redirects (vital for downloads that bounce to a CDN)
+                } else if (lowerKey === 'location') {
                     const redirectUrl = proxyRes.headers[key];
                     try {
                         const absoluteRedirect = new URL(redirectUrl, baseUrl).href;
                         res.setHeader('Location', `${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(absoluteRedirect)}`);
                     } catch (e) {
-                        res.setHeader('Location', redirectUrl); // Fallback if parsing fails
+                        res.setHeader('Location', redirectUrl);
                     }
-                } else if (key.toLowerCase() !== 'content-security-policy') {
+                } else if (lowerKey === 'content-security-policy') {
+                    // Drop CSP to allow proxying
+                } else if (isHtml && (lowerKey === 'content-encoding' || lowerKey === 'content-length')) {
+                    // CRITICAL FIX: Do not pass original compression/length headers if we are unzipping the HTML
+                } else {
                     res.setHeader(key, proxyRes.headers[key]);
                 }
             });
 
             // 1. Rewrite relative paths on standard HTML documents
-            if (contentType.includes('text/html')) {
+            if (isHtml) {
                 let chunks = [];
                 proxyRes.on('data', chunk => chunks.push(chunk));
                 proxyRes.on('end', () => {
@@ -95,9 +101,6 @@ app.get('/proxy', (req, res) => {
                     rewrittenBody = rewrittenBody.replace(/(src|href)=["'](https?:\/\/[^"']+)["']/g, (match, attr, url) => {
                         return `${attr}="${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(url)}"`;
                     });
-
-                    delete proxyRes.headers['content-encoding'];
-                    delete proxyRes.headers['content-length'];
 
                     res.writeHead(proxyRes.statusCode, { 'Content-Type': 'text/html' });
                     res.end(rewrittenBody);
