@@ -1,12 +1,14 @@
 {
   "name": "ylians-math-tutoring",
-  "version": "1.0.0",
-  "description": "Educational Math Tutoring Workspace Platform",
+  "version": "2.0.0",
+  "description": "Educational Math Workspace",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "@mercuryworkshop/bare-server-node": "^2.0.1",
+    "@titaniumnetwork-dev/ultraviolet": "^3.0.5",
     "express": "^4.19.2"
   }
 }
