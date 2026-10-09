@@ -7,7 +7,7 @@ const app = express();
 
 app.use(express.static(__dirname));
 
-// Wildcard cross-origin settings to forcefully bypass local Securly blocks
+// Wildcard cross-origin settings to forcefully bypass blocks
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Upgraded production router that securely proxies cookies, fonts, and heavy layouts
+// Upgraded production router
 app.get('/proxy', (req, res) => {
     const targetUrl = req.query.url;
     if (!targetUrl) return res.status(400).send('Target parameter tracking missing.');
@@ -30,12 +30,10 @@ app.get('/proxy', (req, res) => {
         const baseUrl = parsedUrl.origin;
         const clientModule = parsedUrl.protocol === 'https:' ? https : http;
 
-        // Clone and pass incoming browser session cookies straight to the target site
         const incomingHeaders = { ...req.headers };
         delete incomingHeaders.host;
         delete incomingHeaders.referer;
         
-        // Match specific validation headers to authenticate modern platforms cleanly
         incomingHeaders['Host'] = parsedUrl.hostname;
         incomingHeaders['Referer'] = baseUrl;
         incomingHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -55,10 +53,19 @@ app.get('/proxy', (req, res) => {
             let contentType = proxyRes.headers['content-type'] || '';
             let contentEncoding = proxyRes.headers['content-encoding'] || '';
 
-            // Forward session headers and authentication login cookies back into browser cache storage
+            // Forward session headers, authentication cookies, and FIX REDIRECTS
             Object.keys(proxyRes.headers).forEach((key) => {
                 if (key.toLowerCase() === 'set-cookie') {
                     res.append('Set-Cookie', proxyRes.headers[key]);
+                } else if (key.toLowerCase() === 'location') {
+                    // This intercepts redirects (vital for downloads that bounce to a CDN)
+                    const redirectUrl = proxyRes.headers[key];
+                    try {
+                        const absoluteRedirect = new URL(redirectUrl, baseUrl).href;
+                        res.setHeader('Location', `${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(absoluteRedirect)}`);
+                    } catch (e) {
+                        res.setHeader('Location', redirectUrl); // Fallback if parsing fails
+                    }
                 } else if (key.toLowerCase() !== 'content-security-policy') {
                     res.setHeader(key, proxyRes.headers[key]);
                 }
@@ -78,7 +85,7 @@ app.get('/proxy', (req, res) => {
 
                     let body = buffer.toString('utf8');
 
-                    // Fix relative formatting nodes (e.g., /fonts/main.woff2)
+                    // Fix relative formatting nodes
                     let rewrittenBody = body.replace(/(src|href|action)=["'](?!\/\/|http)([^"']+)["']/g, (match, attr, path) => {
                         const absoluteUrl = path.startsWith('/') ? `${baseUrl}${path}` : `${baseUrl}/${path}`;
                         return `${attr}="${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(absoluteUrl)}"`;
@@ -96,7 +103,7 @@ app.get('/proxy', (req, res) => {
                     res.end(rewrittenBody);
                 });
             } else {
-                // 2. Stream fonts, stylesheet asset links, and media files directly without dropping pipelines
+                // 2. Stream downloads, fonts, and media files directly
                 res.writeHead(proxyRes.statusCode);
                 proxyRes.pipe(res, { end: true });
             }
