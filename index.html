@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ylian's Calculator</title>
+    <script src="/uv/uv.bundle.js" defer></script>
+    <script src="/uv.config.js" defer></script>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -67,7 +69,6 @@
         .key.clear { background: #d9383a; }
         .key.clear:hover { background: #b32d2f; }
 
-        /* Hidden Workspace */
         #workspace { display: none; animation: fadeIn 0.4s ease-in; }
         .proxy-title { font-size: 1.2rem; color: #fff; margin-bottom: 15px; text-align: left;}
         .proxy-box { background: #151515; padding: 15px; border-left: 3px solid #0070f3; font-size: 0.9rem; margin-bottom: 20px; color: #aaa; }
@@ -90,7 +91,6 @@
     
     <div class="display-screen" id="display">0</div>
 
-    <!-- Normal Calculator View -->
     <div class="keypad" id="keypad">
         <button class="key clear" onclick="pressKey('C')">C</button>
         <button class="key" onclick="pressKey('(')">(</button>
@@ -117,12 +117,11 @@
         <button class="key operator" onclick="pressKey('=')">=</button>
     </div>
 
-    <!-- Hidden Proxy View -->
     <div id="workspace">
         <div class="proxy-title">Educational Hub Unlocked</div>
-        <div class="proxy-box">Enter destination to establish a secure tunnel. Local routing restrictions are currently bypassed.</div>
+        <div class="proxy-box">Enter destination to establish a Service Worker tunnel. Modern scripts and layouts are supported.</div>
         <div class="controls">
-            <input type="text" id="urlInput" placeholder="https://example.com" autocomplete="off">
+            <input type="text" id="urlInput" placeholder="https://x.com" autocomplete="off">
             <button class="action-btn btn-launch" onclick="launchWorkspace()">Launch Environment</button>
             <button class="action-btn btn-panic" onclick="triggerPanic()">Quick Exit (Panic)</button>
         </div>
@@ -132,7 +131,13 @@
 <script>
     let currentInput = '';
 
-    // Calculator Logic
+    // Pre-register Service Worker on page load
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', {
+            scope: __uv$config.prefix
+        });
+    }
+
     function pressKey(key) {
         const display = document.getElementById('display');
 
@@ -140,7 +145,6 @@
             currentInput = '';
         } else if (key === '=') {
             try {
-                // Quick math eval for the disguise
                 currentInput = eval(currentInput).toString();
             } catch (e) {
                 currentInput = 'Error';
@@ -152,7 +156,6 @@
 
         display.innerText = currentInput || '0';
 
-        // THE SECRET PASSCODE
         if (currentInput === '9002') {
             document.getElementById('keypad').style.display = 'none';
             document.getElementById('workspace').style.display = 'block';
@@ -160,27 +163,35 @@
             display.style.color = '#0070f3';
             display.style.fontSize = '1.5rem';
             display.style.textAlign = 'center';
-            currentInput = ''; // reset just in case
+            currentInput = '';
         }
     }
 
-    // Proxy Launch Logic
-    function launchWorkspace() {
+    async function launchWorkspace() {
         let targetUrl = document.getElementById('urlInput').value.trim();
         if (!targetUrl) return;
+
         if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
-            targetUrl = 'https://' + targetUrl;
+            if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
+                targetUrl = 'https://' + targetUrl;
+            } else {
+                targetUrl = 'https://www.google.com/search?q=' + encodeURIComponent(targetUrl);
+            }
         }
-        
-        window.location.href = window.location.origin + '/proxy?url=' + encodeURIComponent(targetUrl);
+
+        if ('serviceWorker' in navigator) {
+            await navigator.serviceWorker.register('/sw.js', {
+                scope: __uv$config.prefix
+            });
+        }
+
+        window.location.href = __uv$config.prefix + __uv$config.encodeUrl(targetUrl);
     }
 
-    // Panic Button Logic
     function triggerPanic() { 
         window.location.replace("https://google.com/search?q=calculator"); 
     }
 
-    // Allow pressing "Enter" in the proxy input to launch
     document.getElementById('urlInput').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') { launchWorkspace(); }
     });
