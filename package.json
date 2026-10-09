@@ -7,7 +7,7 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@mercuryworkshop/bare-server-node": "^2.0.1",
+    "@tomphttp/bare-server-node": "^2.0.1",
     "@titaniumnetwork-dev/ultraviolet": "^3.0.5",
     "express": "^4.19.2"
   }
