@@ -131,12 +131,17 @@
 <script>
     let currentInput = '';
 
-    // Pre-register Service Worker on page load
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', {
-            scope: __uv$config.prefix
-        });
-    }
+    window.addEventListener('load', async () => {
+        if ('serviceWorker' in navigator) {
+            try {
+                await navigator.serviceWorker.register('/sw.js', {
+                    scope: __uv$config.prefix
+                });
+            } catch (err) {
+                console.error('SW Registration error:', err);
+            }
+        }
+    });
 
     function pressKey(key) {
         const display = document.getElementById('display');
@@ -159,7 +164,7 @@
         if (currentInput === '9002') {
             document.getElementById('keypad').style.display = 'none';
             document.getElementById('workspace').style.display = 'block';
-            display.innerText = 'ACCESS GRANTED';
+            display.innerText = 'Made by Ylian';
             display.style.color = '#0070f3';
             display.style.fontSize = '1.5rem';
             display.style.textAlign = 'center';
@@ -180,9 +185,18 @@
         }
 
         if ('serviceWorker' in navigator) {
-            await navigator.serviceWorker.register('/sw.js', {
+            const registration = await navigator.serviceWorker.register('/sw.js', {
                 scope: __uv$config.prefix
             });
+            
+            let sw = registration.installing || registration.waiting;
+            if (sw) {
+                await new Promise(resolve => {
+                    sw.addEventListener('statechange', () => {
+                        if (sw.state === 'activated') resolve();
+                    });
+                });
+            }
         }
 
         window.location.href = __uv$config.prefix + __uv$config.encodeUrl(targetUrl);
