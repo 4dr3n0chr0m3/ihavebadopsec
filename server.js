@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
-const createBareServer = require('@mercuryworkshop/bare-server-node');
+const createBareServer = require('@tomphttp/bare-server-node');
 const { uvPath } = require('@titaniumnetwork-dev/ultraviolet');
 
 const app = express();
