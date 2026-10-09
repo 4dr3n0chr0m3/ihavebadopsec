@@ -1,122 +1,189 @@
-const express = require('express');
-const http = require('http');
-const https = require('https');
-const path = require('path');
-const zlib = require('zlib');
-const app = express();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ylian's Calculator</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #121212; 
+            color: #e0e0e0; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+        }
+        .app-container { 
+            background: #1e1e1e; 
+            width: 100%; 
+            max-width: 400px; 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            border: 1px solid #333;
+        }
+        h1 { 
+            font-size: 1.4rem; 
+            color: #888; 
+            text-align: center; 
+            margin-top: 0; 
+            margin-bottom: 20px; 
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .display-screen { 
+            background: #0a0a0a; 
+            padding: 20px; 
+            border-radius: 10px; 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 2rem; 
+            text-align: right; 
+            min-height: 40px; 
+            margin-bottom: 20px; 
+            border: 1px solid #2a2a2a;
+            overflow-x: hidden;
+        }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .key {
+            background: #2c2c2c;
+            border: none;
+            padding: 20px 0;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .key:hover { background: #3d3d3d; }
+        .key.operator { background: #0070f3; }
+        .key.operator:hover { background: #0056b3; }
+        .key.clear { background: #d9383a; }
+        .key.clear:hover { background: #b32d2f; }
 
-app.use(express.static(__dirname));
+        /* Hidden Workspace */
+        #workspace { display: none; animation: fadeIn 0.4s ease-in; }
+        .proxy-title { font-size: 1.2rem; color: #fff; margin-bottom: 15px; text-align: left;}
+        .proxy-box { background: #151515; padding: 15px; border-left: 3px solid #0070f3; font-size: 0.9rem; margin-bottom: 20px; color: #aaa; }
+        .controls { display: flex; flex-direction: column; gap: 12px; }
+        input[type="text"] { padding: 14px; border-radius: 8px; border: 1px solid #444; background-color: #2a2a2a; color: #fff; font-size: 15px; outline: none;}
+        input[type="text"]:focus { border-color: #0070f3; }
+        button.action-btn { padding: 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        .btn-launch { background-color: #0070f3; color: white; }
+        .btn-launch:hover { background-color: #0056b3; }
+        .btn-panic { background-color: #d9383a; color: white; }
+        .btn-panic:hover { background-color: #b32d2f; }
 
-// Wildcard cross-origin settings to forcefully bypass blocks
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    next();
-});
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+<div class="app-container">
+    <h1>Ylian's Calculator</h1>
+    
+    <div class="display-screen" id="display">0</div>
 
-// Upgraded production router
-app.get('/proxy', (req, res) => {
-    const targetUrl = req.query.url;
-    if (!targetUrl) return res.status(400).send('Target parameter tracking missing.');
-
-    try {
-        const parsedUrl = new URL(targetUrl);
-        const baseUrl = parsedUrl.origin;
-        const clientModule = parsedUrl.protocol === 'https:' ? https : http;
-
-        const incomingHeaders = { ...req.headers };
-        delete incomingHeaders.host;
-        delete incomingHeaders.referer;
+    <!-- Normal Calculator View -->
+    <div class="keypad" id="keypad">
+        <button class="key clear" onclick="pressKey('C')">C</button>
+        <button class="key" onclick="pressKey('(')">(</button>
+        <button class="key" onclick="pressKey(')')">)</button>
+        <button class="key operator" onclick="pressKey('/')">÷</button>
         
-        incomingHeaders['Host'] = parsedUrl.hostname;
-        incomingHeaders['Referer'] = baseUrl;
-        incomingHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-        incomingHeaders['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,font/*,video/*,*/*;q=0.8';
-        incomingHeaders['Accept-Encoding'] = 'gzip, deflate';
+        <button class="key" onclick="pressKey('7')">7</button>
+        <button class="key" onclick="pressKey('8')">8</button>
+        <button class="key" onclick="pressKey('9')">9</button>
+        <button class="key operator" onclick="pressKey('*')">×</button>
+        
+        <button class="key" onclick="pressKey('4')">4</button>
+        <button class="key" onclick="pressKey('5')">5</button>
+        <button class="key" onclick="pressKey('6')">6</button>
+        <button class="key operator" onclick="pressKey('-')">-</button>
+        
+        <button class="key" onclick="pressKey('1')">1</button>
+        <button class="key" onclick="pressKey('2')">2</button>
+        <button class="key" onclick="pressKey('3')">3</button>
+        <button class="key operator" onclick="pressKey('+')">+</button>
+        
+        <button class="key" onclick="pressKey('0')" style="grid-column: span 2;">0</button>
+        <button class="key" onclick="pressKey('.')">.</button>
+        <button class="key operator" onclick="pressKey('=')">=</button>
+    </div>
 
-        const options = {
-            method: 'GET',
-            hostname: parsedUrl.hostname,
-            path: parsedUrl.pathname + parsedUrl.search,
-            port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
-            headers: incomingHeaders,
-            rejectUnauthorized: false
-        };
+    <!-- Hidden Proxy View -->
+    <div id="workspace">
+        <div class="proxy-title">Educational Hub Unlocked</div>
+        <div class="proxy-box">Enter destination to establish a secure tunnel. Local routing restrictions are currently bypassed.</div>
+        <div class="controls">
+            <input type="text" id="urlInput" placeholder="https://example.com" autocomplete="off">
+            <button class="action-btn btn-launch" onclick="launchWorkspace()">Launch Environment</button>
+            <button class="action-btn btn-panic" onclick="triggerPanic()">Quick Exit (Panic)</button>
+        </div>
+    </div>
+</div>
 
-        const proxyReq = clientModule.request(options, (proxyRes) => {
-            let contentType = proxyRes.headers['content-type'] || '';
-            let contentEncoding = proxyRes.headers['content-encoding'] || '';
+<script>
+    let currentInput = '';
 
-            // Forward session headers, authentication cookies, and FIX REDIRECTS
-            Object.keys(proxyRes.headers).forEach((key) => {
-                if (key.toLowerCase() === 'set-cookie') {
-                    res.append('Set-Cookie', proxyRes.headers[key]);
-                } else if (key.toLowerCase() === 'location') {
-                    // This intercepts redirects (vital for downloads that bounce to a CDN)
-                    const redirectUrl = proxyRes.headers[key];
-                    try {
-                        const absoluteRedirect = new URL(redirectUrl, baseUrl).href;
-                        res.setHeader('Location', `${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(absoluteRedirect)}`);
-                    } catch (e) {
-                        res.setHeader('Location', redirectUrl); // Fallback if parsing fails
-                    }
-                } else if (key.toLowerCase() !== 'content-security-policy') {
-                    res.setHeader(key, proxyRes.headers[key]);
-                }
-            });
+    // Calculator Logic
+    function pressKey(key) {
+        const display = document.getElementById('display');
 
-            // 1. Rewrite relative paths on standard HTML documents
-            if (contentType.includes('text/html')) {
-                let chunks = [];
-                proxyRes.on('data', chunk => chunks.push(chunk));
-                proxyRes.on('end', () => {
-                    let buffer = Buffer.concat(chunks);
-
-                    try {
-                        if (contentEncoding === 'gzip') buffer = zlib.gunzipSync(buffer);
-                        else if (contentEncoding === 'deflate') buffer = zlib.inflateSync(buffer);
-                    } catch (e) {}
-
-                    let body = buffer.toString('utf8');
-
-                    // Fix relative formatting nodes
-                    let rewrittenBody = body.replace(/(src|href|action)=["'](?!\/\/|http)([^"']+)["']/g, (match, attr, path) => {
-                        const absoluteUrl = path.startsWith('/') ? `${baseUrl}${path}` : `${baseUrl}/${path}`;
-                        return `${attr}="${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(absoluteUrl)}"`;
-                    });
-
-                    // Fix explicit web protocols
-                    rewrittenBody = rewrittenBody.replace(/(src|href)=["'](https?:\/\/[^"']+)["']/g, (match, attr, url) => {
-                        return `${attr}="${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(url)}"`;
-                    });
-
-                    delete proxyRes.headers['content-encoding'];
-                    delete proxyRes.headers['content-length'];
-
-                    res.writeHead(proxyRes.statusCode, { 'Content-Type': 'text/html' });
-                    res.end(rewrittenBody);
-                });
-            } else {
-                // 2. Stream downloads, fonts, and media files directly
-                res.writeHead(proxyRes.statusCode);
-                proxyRes.pipe(res, { end: true });
+        if (key === 'C') {
+            currentInput = '';
+        } else if (key === '=') {
+            try {
+                // Quick math eval for the disguise
+                currentInput = eval(currentInput).toString();
+            } catch (e) {
+                currentInput = 'Error';
             }
-        });
+        } else {
+            if (currentInput === 'Error') currentInput = '';
+            currentInput += key;
+        }
 
-        proxyReq.on('error', (err) => res.status(500).send(err.message));
-        proxyReq.end();
-    } catch (e) {
-        res.status(400).send('Invalid path layout format sequence.');
+        display.innerText = currentInput || '0';
+
+        // THE SECRET PASSCODE
+        if (currentInput === '9002') {
+            document.getElementById('keypad').style.display = 'none';
+            document.getElementById('workspace').style.display = 'block';
+            display.innerText = 'ACCESS GRANTED';
+            display.style.color = '#0070f3';
+            display.style.fontSize = '1.5rem';
+            display.style.textAlign = 'center';
+            currentInput = ''; // reset just in case
+        }
     }
-});
 
-const port = process.env.PORT || 8080;
-app.listen(port, () => {
-    console.log(`Educational workspace operational on port ${port}`);
-});
+    // Proxy Launch Logic
+    function launchWorkspace() {
+        let targetUrl = document.getElementById('urlInput').value.trim();
+        if (!targetUrl) return;
+        if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+            targetUrl = 'https://' + targetUrl;
+        }
+        
+        window.location.href = window.location.origin + '/proxy?url=' + encodeURIComponent(targetUrl);
+    }
+
+    // Panic Button Logic
+    function triggerPanic() { 
+        window.location.replace("https://google.com/search?q=calculator"); 
+    }
+
+    // Allow pressing "Enter" in the proxy input to launch
+    document.getElementById('urlInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') { launchWorkspace(); }
+    });
+</script>
+</body>
+</html>
