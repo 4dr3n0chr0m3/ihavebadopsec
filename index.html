@@ -41,12 +41,13 @@
             padding: 20px; 
             border-radius: 10px; 
             font-family: 'Courier New', Courier, monospace; 
-            font-size: 2rem; 
+            font-size: 1.8rem; 
             text-align: right; 
             min-height: 40px; 
             margin-bottom: 20px; 
             border: 1px solid #2a2a2a;
             overflow-x: hidden;
+            word-break: break-all;
         }
         .keypad {
             display: grid;
@@ -131,18 +132,6 @@
 <script>
     let currentInput = '';
 
-    window.addEventListener('load', async () => {
-        if ('serviceWorker' in navigator) {
-            try {
-                await navigator.serviceWorker.register('/sw.js', {
-                    scope: __uv$config.prefix
-                });
-            } catch (err) {
-                console.error('SW Registration error:', err);
-            }
-        }
-    });
-
     function pressKey(key) {
         const display = document.getElementById('display');
 
@@ -185,17 +174,41 @@
         }
 
         const launchBtn = document.querySelector('.btn-launch');
+        const display = document.getElementById('display');
         if (launchBtn) launchBtn.innerText = 'Connecting...';
 
-        if ('serviceWorker' in navigator) {
+        try {
+            if (!('serviceWorker' in navigator)) {
+                throw new Error('Service Workers not supported on this browser.');
+            }
+
+            // Register SW
             await navigator.serviceWorker.register('/sw.js', {
                 scope: __uv$config.prefix
             });
-            // Ensure the Service Worker is fully active before navigating
-            await navigator.serviceWorker.ready;
-        }
 
-        window.location.href = __uv$config.prefix + __uv$config.encodeUrl(targetUrl);
+            // Race against a 4-second timeout so it never hangs indefinitely
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('SW Activation Timed Out')), 4000)
+            );
+
+            await Promise.race([
+                navigator.serviceWorker.ready,
+                timeoutPromise
+            ]);
+
+            // If SW is ready, navigate
+            window.location.href = __uv$config.prefix + __uv$config.encodeUrl(targetUrl);
+
+        } catch (err) {
+            console.error('Launch Error:', err);
+            if (launchBtn) launchBtn.innerText = 'Launch Environment';
+            if (display) {
+                display.style.color = '#d9383a';
+                display.style.fontSize = '0.9rem';
+                display.innerText = 'ERR: ' + err.message;
+            }
+        }
     }
 
     function triggerPanic() { 
