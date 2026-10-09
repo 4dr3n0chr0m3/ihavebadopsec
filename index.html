@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ylian's Calculator</title>
+    <!-- In-Page DevTools (Bypasses Chromebook DevTools Block) -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
+    
     <script src="/uv/uv.bundle.js" defer></script>
     <script src="/uv.config.js" defer></script>
     <style>
@@ -179,17 +183,15 @@
 
         try {
             if (!('serviceWorker' in navigator)) {
-                throw new Error('Service Workers not supported on this browser.');
+                throw new Error('Service Workers disabled/unsupported.');
             }
 
-            // Register SW
             await navigator.serviceWorker.register('/sw.js', {
                 scope: __uv$config.prefix
             });
 
-            // Race against a 4-second timeout so it never hangs indefinitely
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('SW Activation Timed Out')), 4000)
+                setTimeout(() => reject(new Error('SW Activation Timed Out')), 5000)
             );
 
             await Promise.race([
@@ -197,7 +199,6 @@
                 timeoutPromise
             ]);
 
-            // If SW is ready, navigate
             window.location.href = __uv$config.prefix + __uv$config.encodeUrl(targetUrl);
 
         } catch (err) {
