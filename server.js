@@ -7,7 +7,7 @@ const app = express();
 
 app.use(express.static(__dirname));
 
-// Wildcard cross-origin settings to forcefully bypass blocks
+// Wildcard cross-origin settings
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -52,9 +52,13 @@ app.get('/proxy', (req, res) => {
         const proxyReq = clientModule.request(options, (proxyRes) => {
             let contentType = proxyRes.headers['content-type'] || '';
             let contentEncoding = proxyRes.headers['content-encoding'] || '';
+            
+            // Flag both HTML and CSS for interception
             let isHtml = contentType.includes('text/html');
+            let isCss = contentType.includes('text/css');
+            let isModifiable = isHtml || isCss;
 
-            // Forward session headers, authentication cookies, and FIX REDIRECTS
+            // Forward headers
             Object.keys(proxyRes.headers).forEach((key) => {
                 const lowerKey = key.toLowerCase();
 
@@ -69,16 +73,16 @@ app.get('/proxy', (req, res) => {
                         res.setHeader('Location', redirectUrl);
                     }
                 } else if (lowerKey === 'content-security-policy') {
-                    // Drop CSP to allow proxying
-                } else if (isHtml && (lowerKey === 'content-encoding' || lowerKey === 'content-length')) {
-                    // CRITICAL FIX: Do not pass original compression/length headers if we are unzipping the HTML
+                    // Drop CSP
+                } else if (isModifiable && (lowerKey === 'content-encoding' || lowerKey === 'content-length')) {
+                    // Drop compression/length headers for files we are modifying
                 } else {
                     res.setHeader(key, proxyRes.headers[key]);
                 }
             });
 
-            // 1. Rewrite relative paths on standard HTML documents
-            if (isHtml) {
+            // 1. Rewrite relative paths on HTML and CSS files
+            if (isModifiable) {
                 let chunks = [];
                 proxyRes.on('data', chunk => chunks.push(chunk));
                 proxyRes.on('end', () => {
@@ -90,23 +94,35 @@ app.get('/proxy', (req, res) => {
                     } catch (e) {}
 
                     let body = buffer.toString('utf8');
+                    let rewrittenBody = body;
 
-                    // Fix relative formatting nodes
-                    let rewrittenBody = body.replace(/(src|href|action)=["'](?!\/\/|http)([^"']+)["']/g, (match, attr, path) => {
-                        const absoluteUrl = path.startsWith('/') ? `${baseUrl}${path}` : `${baseUrl}/${path}`;
-                        return `${attr}="${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(absoluteUrl)}"`;
-                    });
+                    if (isHtml) {
+                        // Fix relative formatting nodes in HTML
+                        rewrittenBody = rewrittenBody.replace(/(src|href|action)=["'](?!\/\/|http|data:)([^"']+)["']/g, (match, attr, path) => {
+                            const absoluteUrl = path.startsWith('/') ? `${baseUrl}${path}` : `${baseUrl}/${path}`;
+                            return `${attr}="${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(absoluteUrl)}"`;
+                        });
 
-                    // Fix explicit web protocols
-                    rewrittenBody = rewrittenBody.replace(/(src|href)=["'](https?:\/\/[^"']+)["']/g, (match, attr, url) => {
-                        return `${attr}="${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(url)}"`;
-                    });
+                        // Fix explicit web protocols in HTML
+                        rewrittenBody = rewrittenBody.replace(/(src|href)=["'](https?:\/\/[^"']+)["']/g, (match, attr, url) => {
+                            return `${attr}="${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(url)}"`;
+                        });
+                    } else if (isCss) {
+                        // Fix URLs inside CSS files (e.g., fonts, background images)
+                        rewrittenBody = rewrittenBody.replace(/url\(['"]?(.*?)['"]?\)/ig, (match, path) => {
+                            if (path.startsWith('data:')) return match; // Leave base64 data alone
+                            try {
+                                const absoluteUrl = path.startsWith('http') ? path : new URL(path, baseUrl).href;
+                                return `url("${req.protocol}://${req.get('host')}/proxy?url=${encodeURIComponent(absoluteUrl)}")`;
+                            } catch(e) { return match; }
+                        });
+                    }
 
-                    res.writeHead(proxyRes.statusCode, { 'Content-Type': 'text/html' });
+                    res.writeHead(proxyRes.statusCode, { 'Content-Type': contentType });
                     res.end(rewrittenBody);
                 });
             } else {
-                // 2. Stream downloads, fonts, and media files directly
+                // 2. Stream downloads, media, and unmodifiable files directly
                 res.writeHead(proxyRes.statusCode);
                 proxyRes.pipe(res, { end: true });
             }
