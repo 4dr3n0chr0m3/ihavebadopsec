@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ylian's Calculator</title>
-    <!-- In-Page DevTools (Bypasses Chromebook DevTools Block) -->
+    <title>Calculator</title>
+    <!-- In-Page DevTools (Useful for debugging on Chromebook) -->
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>eruda.init();</script>
     
@@ -29,6 +29,7 @@
             border-radius: 20px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
             border: 1px solid #333;
+            position: relative;
         }
         h1 { 
             font-size: 1.4rem; 
@@ -74,12 +75,32 @@
         .key.clear { background: #d9383a; }
         .key.clear:hover { background: #b32d2f; }
 
+        /* Secret Input Field - Looks like a subtle shadow/divider */
+        .secret-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid #222;
+            color: #444; /* Very dark text to blend in */
+            text-align: center;
+            font-size: 1rem;
+            padding: 10px 0;
+            margin-top: 20px;
+            outline: none;
+            transition: 0.3s;
+            letter-spacing: 2px;
+        }
+        .secret-input:focus {
+            border-bottom: 2px solid #0070f3;
+            color: #fff; /* Reveals text clearly when actively typing */
+        }
+
         #workspace { display: none; animation: fadeIn 0.4s ease-in; }
         .proxy-title { font-size: 1.2rem; color: #fff; margin-bottom: 15px; text-align: left;}
         .proxy-box { background: #151515; padding: 15px; border-left: 3px solid #0070f3; font-size: 0.9rem; margin-bottom: 20px; color: #aaa; }
         .controls { display: flex; flex-direction: column; gap: 12px; }
-        input[type="text"] { padding: 14px; border-radius: 8px; border: 1px solid #444; background-color: #2a2a2a; color: #fff; font-size: 15px; outline: none;}
-        input[type="text"]:focus { border-color: #0070f3; }
+        input.url-input { padding: 14px; border-radius: 8px; border: 1px solid #444; background-color: #2a2a2a; color: #fff; font-size: 15px; outline: none;}
+        input.url-input:focus { border-color: #0070f3; }
         button.action-btn { padding: 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; transition: 0.2s; }
         .btn-launch { background-color: #0070f3; color: white; }
         .btn-launch:hover { background-color: #0056b3; }
@@ -92,7 +113,7 @@
 <body>
 
 <div class="app-container">
-    <h1>Ylian's Calculator</h1>
+    <h1>Calculator</h1>
     
     <div class="display-screen" id="display">0</div>
 
@@ -122,11 +143,14 @@
         <button class="key operator" onclick="pressKey('=')">=</button>
     </div>
 
+    <!-- Secret Password Field -->
+    <input type="password" id="secretInput" class="secret-input" autocomplete="off">
+
     <div id="workspace">
         <div class="proxy-title">Educational Hub Unlocked</div>
-        <div class="proxy-box">Enter destination to establish a Service Worker tunnel. Modern scripts and layouts are supported.</div>
+        <div class="proxy-box">Enter destination to establish a secure tunnel. Standard proxy navigation enabled.</div>
         <div class="controls">
-            <input type="text" id="urlInput" placeholder="https://x.com" autocomplete="off">
+            <input type="text" id="urlInput" class="url-input" placeholder="https://x.com" autocomplete="off">
             <button class="action-btn btn-launch" onclick="launchWorkspace()">Launch Environment</button>
             <button class="action-btn btn-panic" onclick="triggerPanic()">Quick Exit (Panic)</button>
         </div>
@@ -135,7 +159,9 @@
 
 <script>
     let currentInput = '';
+    let globalKeyBuffer = '';
 
+    // Handles standard calculator math
     function pressKey(key) {
         const display = document.getElementById('display');
 
@@ -153,22 +179,72 @@
         }
 
         display.innerText = currentInput || '0';
+    }
 
-        if (currentInput === '9002') {
+    // Handles unlocking logic
+    function checkUnlock(val) {
+        if (val.toLowerCase() === 'rubenator2009') {
             document.getElementById('keypad').style.display = 'none';
+            document.getElementById('secretInput').style.display = 'none';
             document.getElementById('workspace').style.display = 'block';
-            display.innerText = 'ACCESS GRANTED';
+            
+            const display = document.getElementById('display');
+            display.innerText = 'MADE BY YLIAN';
             display.style.color = '#0070f3';
-            display.style.fontSize = '1.5rem';
+            display.style.fontSize = '1.3rem';
             display.style.textAlign = 'center';
-            currentInput = '';
+            display.style.fontWeight = 'bold';
         }
+    }
+
+    // Listen to the secret input field
+    document.getElementById('secretInput').addEventListener('input', function(e) {
+        checkUnlock(e.target.value);
+    });
+
+    // Secret listener to catch physical typing anywhere on the page
+    document.addEventListener('keydown', function(e) {
+        // Don't capture keys if they are typing in the URL input box
+        if (document.activeElement.id === 'urlInput') return;
+        
+        if (e.key.length === 1) { // Only standard keys
+            globalKeyBuffer += e.key;
+            // Keep buffer at reasonable length
+            if (globalKeyBuffer.length > 20) globalKeyBuffer = globalKeyBuffer.slice(-20); 
+            
+            if (globalKeyBuffer.toLowerCase().includes('rubenator2009')) {
+                checkUnlock('rubenator2009');
+                globalKeyBuffer = ''; // Reset
+            }
+        }
+    });
+
+    // Advanced SW Registration to fix the "Cannot GET" error
+    async function registerSW() {
+        if (!('serviceWorker' in navigator)) throw new Error('Service Workers disabled on this browser.');
+        
+        const reg = await navigator.serviceWorker.register('/sw.js', {
+            scope: __uv$config.prefix
+        });
+
+        // If a worker is actively controlling the page, we're good to go
+        if (navigator.serviceWorker.controller) {
+            return true;
+        }
+
+        // Otherwise, wait for the worker to take over
+        return new Promise((resolve) => {
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                resolve(true);
+            });
+        });
     }
 
     async function launchWorkspace() {
         let targetUrl = document.getElementById('urlInput').value.trim();
         if (!targetUrl) return;
 
+        // URL Formatting
         if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
             if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
                 targetUrl = 'https://' + targetUrl;
@@ -179,27 +255,14 @@
 
         const launchBtn = document.querySelector('.btn-launch');
         const display = document.getElementById('display');
-        if (launchBtn) launchBtn.innerText = 'Connecting...';
+        
+        if (launchBtn) launchBtn.innerText = 'Activating Tunnel...';
 
         try {
-            if (!('serviceWorker' in navigator)) {
-                throw new Error('Service Workers disabled on this device.');
-            }
+            // Wait for SW to guarantee it will intercept the request
+            await registerSW();
 
-            const reg = await navigator.serviceWorker.register('/sw.js', {
-                scope: __uv$config.prefix
-            });
-
-            if (reg.waiting) {
-                reg.waiting.postMessage({ action: 'skipWaiting' });
-            }
-
-            let attempts = 0;
-            while (!navigator.serviceWorker.controller && attempts < 10) {
-                await new Promise(r => setTimeout(r, 150));
-                attempts++;
-            }
-
+            // Redirect using the UV encoder
             window.location.href = __uv$config.prefix + __uv$config.encodeUrl(targetUrl);
 
         } catch (err) {
@@ -207,7 +270,7 @@
             if (launchBtn) launchBtn.innerText = 'Launch Environment';
             if (display) {
                 display.style.color = '#d9383a';
-                display.style.fontSize = '0.9rem';
+                display.style.fontSize = '1rem';
                 display.innerText = 'ERR: ' + err.message;
             }
         }
