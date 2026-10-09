@@ -183,21 +183,22 @@
 
         try {
             if (!('serviceWorker' in navigator)) {
-                throw new Error('Service Workers disabled/unsupported.');
+                throw new Error('Service Workers disabled on this device.');
             }
 
-            await navigator.serviceWorker.register('/sw.js', {
+            const reg = await navigator.serviceWorker.register('/sw.js', {
                 scope: __uv$config.prefix
             });
 
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('SW Activation Timed Out')), 5000)
-            );
+            if (reg.waiting) {
+                reg.waiting.postMessage({ action: 'skipWaiting' });
+            }
 
-            await Promise.race([
-                navigator.serviceWorker.ready,
-                timeoutPromise
-            ]);
+            let attempts = 0;
+            while (!navigator.serviceWorker.controller && attempts < 10) {
+                await new Promise(r => setTimeout(r, 150));
+                attempts++;
+            }
 
             window.location.href = __uv$config.prefix + __uv$config.encodeUrl(targetUrl);
 
